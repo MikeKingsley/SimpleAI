@@ -17,8 +17,6 @@ public class AIController : MonoBehaviour {
     public bool ragdoll;
     public Rigidbody[] ragdollParts;
 
-    public bool DrawGizmos;
-
     [HideInInspector] public bool alive = true;
     [HideInInspector] public float currentHealth;
     [HideInInspector] public AIGun gun;
@@ -30,7 +28,8 @@ public class AIController : MonoBehaviour {
     bool ragdollPrevState = false;
     public AIController currentTarget = null;
     Vector3 wanderPoint;
-    bool takingHit;
+    bool attacking=false;
+    Quaternion gunStartRot;
 
 
     void Start() {
@@ -49,17 +48,24 @@ public class AIController : MonoBehaviour {
         wanderPoint = GetWanderPoint();
 
         SpawnWeapon();
+        gunStartRot = handSlot.rotation;
     }
 
     void Update()
     {
         if (alive)
         {
-            Wander();
+            if (!attacking)
+                Wander();
+
             AttackTarget();
 
             velocity = agent.velocity.magnitude;
-            anim.SetFloat("speed", velocity);
+
+            if (velocity != anim.GetFloat("speed"))
+            {
+                anim.SetFloat("speed", velocity);
+            }
 
             if (resetPath)
             {
@@ -74,6 +80,11 @@ public class AIController : MonoBehaviour {
         {
             ToggleRagdoll();
             ragdollPrevState = ragdoll;
+        }
+
+        if (!alive && ragdoll && CheckWaitTimer(5))
+        {
+            ToggleRagdoll();
         }
     }
 
@@ -90,12 +101,12 @@ public class AIController : MonoBehaviour {
     bool CheckWaitTimer(float time)
     {
         timeElapsed += Time.deltaTime;
-        return (timeElapsed >= Random.Range((time / 2), (enemyStats.attackRate * 2)));
+        return (timeElapsed >= time);
     }
 
     void SpawnWeapon()
     {
-        GameObject weap = Instantiate(weapon, handSlot.transform.position, handSlot.transform.rotation, handSlot);
+        GameObject weap = Instantiate(weapon, handSlot.position, handSlot.rotation, handSlot);
         gun = weap.GetComponent<AIGun>();
     }
 
@@ -118,14 +129,17 @@ public class AIController : MonoBehaviour {
         if (currentTarget == null)
             currentTarget = FindClosestTarget();
 
-        if (currentTarget != null && currentTarget.alive && LineOfSight(currentTarget.transform))
+        if (currentTarget != null && currentTarget.alive 
+            && gameManager.LineOfSight(transform, currentTarget.transform.position, gun.firePoint.position, enemyStats.lookRange, enemyStats.fov, obstacleMask))
         {
-            StopPatrol();
-            TurnToFace(currentTarget.transform);
-            AimAtTarget(currentTarget);
+            attacking = true;
             anim.SetBool("shooting", true);
 
-            if (CheckWaitTimer(enemyStats.attackRate))
+            StopPatrol();
+            transform.rotation = gameManager.TurnToFace(transform, currentTarget.transform.position, 5f);
+            handSlot.rotation = gameManager.TurnToFace(handSlot, currentTarget.chest.position, 5f);
+
+            if (CheckWaitTimer(Random.Range((enemyStats.attackRate / 2), (enemyStats.attackRate * 2))))
             {
                 timeElapsed = 0;
                 gun.Shoot(this);
@@ -134,6 +148,8 @@ public class AIController : MonoBehaviour {
         {
             anim.SetBool("shooting", false);
             currentTarget = null;
+            attacking = false;
+            //handSlot.rotation = gunStartRot;
         }
 
     }
@@ -214,7 +230,8 @@ public class AIController : MonoBehaviour {
             {
                 float dstToTarget = Vector3.Distance(transform.position, gameManager.iControllers[i].transform.position);
 
-                if (LineOfSight(gameManager.iControllers[i].transform) && dstToTarget < distance)
+                if (gameManager.LineOfSight(transform, gameManager.iControllers[i].transform.position, gun.firePoint.position, enemyStats.lookRange, enemyStats.fov, obstacleMask) 
+                    && dstToTarget < distance)
                 {
                     distance = dstToTarget;
                     closest = gameManager.iControllers[i];
@@ -224,40 +241,6 @@ public class AIController : MonoBehaviour {
         }
 
         return closest;
-    }
-
-    /// <summary>
-    /// Checks line of sight from this object to the passed argument transform
-    /// </summary>
-    /// <param name="target">Transform to check</param>
-    /// <returns>Bool: true if has line of sight, else false.</returns>
-    bool LineOfSight(Transform target)
-    {
-        float dstToTarget = Vector3.Distance(transform.position, target.position);
-        Vector3 dirToTarget = (target.position - transform.position).normalized;
-        if (dstToTarget <= enemyStats.lookRange && Vector3.Angle(transform.forward, dirToTarget) < enemyStats.fov / 2)
-        {
-            if (!Physics.Raycast(gun.firePoint.position, dirToTarget, dstToTarget, obstacleMask))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Turns object to the face the in the direction of the target transform over time.
-    /// </summary>
-    /// <param name="target">Transform to turn towards</param>
-    void TurnToFace(Transform target)
-    {
-        if (target != null)
-        {
-            Vector3 dirToTarget = (target.position - transform.position).normalized;
-            Quaternion lookRotation = Quaternion.LookRotation(new Vector3(dirToTarget.x, 0, dirToTarget.z));
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
-        }
     }
 
     void ToggleRagdoll()

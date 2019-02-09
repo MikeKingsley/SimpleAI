@@ -50,7 +50,7 @@ public class AISpawner : MonoBehaviour {
 
     void SpawnObject(Vector3 point, GameObject obj)
     {
-        GameObject spawned = Instantiate(obj, point, Quaternion.identity);
+        GameObject spawned = Instantiate(obj, point, transform.rotation);
         gameManager.AddToList(spawned.GetComponent<AIController>());
     }
 

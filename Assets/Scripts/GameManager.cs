@@ -82,6 +82,29 @@ public class GameManager : MonoBehaviour {
         Gizmos.DrawWireSphere(transform.position, wanderRadius);
     }
 
+    /// <summary>Checks line of sight from this object to the passed argument transform.</summary>
+    /// <param name="start">Transform to start from.</param>
+    /// <param name="target">Vector3 target point.</param>
+    /// <param name="rayCastStart">Vector3 ray cast position to start from.</param>
+    /// <param name="range">Max distance range.</param>
+    /// <param name="fov">Sight field of view.</param>
+    /// <param name="mask">Layer to check for obstacles. Use -1 for all layers.</param>
+    /// <returns>Bool: true if has line of sight, else false.</returns>
+    public bool LineOfSight(Transform caller, Vector3 target, Vector3 rayCastStart, float range, float fov, int mask)
+    {
+        float dstToTarget = Vector3.Distance(caller.position, target);
+        Vector3 dirToTarget = (target - caller.position).normalized;
+        if (dstToTarget <= range && Vector3.Angle(caller.forward, dirToTarget) < fov / 2)
+        {
+            if (!Physics.Raycast(rayCastStart, dirToTarget, dstToTarget, mask))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Turns object to the face the in the direction of the target transform over time.</summary>
     /// <param name="start">Transform to turn</param>
     /// <param name="target">Vector3 to turn towards</param>
