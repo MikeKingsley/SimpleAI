@@ -5,8 +5,8 @@ public class AISpawner : MonoBehaviour {
 
     public GameObject[] objs;
     [Range(0,200)] public float spawnRadius=50;
-    [Range(0, 15)] public float waitTimer=5;
-    [Range(1,1000)] public int spawnLimit=5;
+    [Range(0, 15)] public float waitTimer=1;
+    [Range(1,100)] public int spawnLimit=25;
     public bool autoSpawn;
 
     GameManager gameManager;

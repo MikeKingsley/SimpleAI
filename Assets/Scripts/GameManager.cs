@@ -80,6 +80,12 @@ public class GameManager : MonoBehaviour {
     {
         Gizmos.color = Color.white;
         Gizmos.DrawWireSphere(transform.position, wanderRadius);
+
+        Gizmos.color = Color.yellow;
+        for (int i = 0; i < wanderPoints.Count; i++)
+        {
+            Gizmos.DrawWireSphere(wanderPoints[i], 0.5f);
+        }
     }
 
     /// <summary>Checks line of sight from this object to the passed argument transform.</summary>
@@ -109,10 +115,18 @@ public class GameManager : MonoBehaviour {
     /// <param name="start">Transform to turn</param>
     /// <param name="target">Vector3 to turn towards</param>
     /// <param name="speed">Rate of turn</param>
-    public Quaternion TurnToFace(Transform start, Vector3 target, float speed)
+    /// <param name="locked">True: Locked to X,Z axis, False: Use X,Y,Z axis</param>
+    public Quaternion TurnToFace(Transform start, Vector3 target, float speed, bool locked)
     {
         Vector3 dirToTarget = (target - start.position).normalized;
-        Quaternion lookRotation = Quaternion.LookRotation(new Vector3(dirToTarget.x, 0, dirToTarget.z));
+        Quaternion lookRotation = Quaternion.identity;
+        if (locked)
+        {
+            lookRotation = Quaternion.LookRotation(new Vector3(dirToTarget.x, 0, dirToTarget.z));
+        } else
+        {
+            lookRotation = Quaternion.LookRotation(new Vector3(dirToTarget.x, dirToTarget.y, dirToTarget.z));
+        }
         return Quaternion.Slerp(start.rotation, lookRotation, Time.deltaTime * speed);
     }
 

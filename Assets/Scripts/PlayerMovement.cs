@@ -12,6 +12,8 @@ public class PlayerMovement : MonoBehaviour {
     public float minimumY = -60F;
     public float maximumY = 60F;
 
+    public bool flyCamera = false;
+
     enum RotationAxes { MouseXAndY = 0, MouseX = 1, MouseY = 2 }
     RotationAxes axes = RotationAxes.MouseXAndY;
     float rotationY = 0F;
@@ -68,7 +70,9 @@ public class PlayerMovement : MonoBehaviour {
 
     void Move(Vector3 direction, float speed)
     {
-        direction.y = 0;
+        if (!flyCamera)
+            direction.y = 0;
+
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
     }
 }

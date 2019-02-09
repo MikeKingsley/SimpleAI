@@ -55,7 +55,7 @@ public class AIController : MonoBehaviour {
     {
         if (alive)
         {
-            if (!attacking)
+            if (!attacking || currentTarget == null || !currentTarget.alive)
                 Wander();
 
             AttackTarget();
@@ -129,27 +129,35 @@ public class AIController : MonoBehaviour {
         if (currentTarget == null)
             currentTarget = FindClosestTarget();
 
-        if (currentTarget != null && currentTarget.alive 
-            && gameManager.LineOfSight(transform, currentTarget.transform.position, gun.firePoint.position, enemyStats.lookRange, enemyStats.fov, obstacleMask))
+        if (currentTarget != null && currentTarget.alive)
         {
-            attacking = true;
-            anim.SetBool("shooting", true);
+            wanderPoint = currentTarget.transform.position;
 
-            StopPatrol();
-            transform.rotation = gameManager.TurnToFace(transform, currentTarget.transform.position, 5f);
-            handSlot.rotation = gameManager.TurnToFace(handSlot, currentTarget.chest.position, 5f);
-
-            if (CheckWaitTimer(Random.Range((enemyStats.attackRate / 2), (enemyStats.attackRate * 2))))
+            if (gameManager.LineOfSight(transform, currentTarget.transform.position, gun.firePoint.position, enemyStats.lookRange, enemyStats.fov, obstacleMask))
             {
-                timeElapsed = 0;
-                gun.Shoot(this);
+                attacking = true;
+                anim.SetBool("shooting", true);
+                StopPatrol();
+                transform.rotation = gameManager.TurnToFace(transform, currentTarget.transform.position, 5f, true);
+                handSlot.rotation = gameManager.TurnToFace(handSlot, currentTarget.chest.position, 5f, false);
+
+                if (CheckWaitTimer(Random.Range((enemyStats.attackRate / 2), (enemyStats.attackRate * 2))))
+                {
+                    timeElapsed = 0;
+                    gun.Shoot(this);
+                }
+            }
+            else
+            {
+                agent.destination = currentTarget.transform.position;
+                //attacking = false;
+                anim.SetBool("shooting", false);
             }
         } else
         {
             anim.SetBool("shooting", false);
-            currentTarget = null;
             attacking = false;
-            //handSlot.rotation = gunStartRot;
+            currentTarget = null;
         }
 
     }
@@ -161,9 +169,8 @@ public class AIController : MonoBehaviour {
             currentTarget = controller;
         }
         currentHealth -= damage;
-        StopPatrol();
-        CheckAlive();
-        
+        agent.destination = currentTarget.transform.position;
+        CheckAlive();        
     }
 
     void CheckAlive()
