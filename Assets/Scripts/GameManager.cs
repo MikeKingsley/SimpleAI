@@ -20,11 +20,6 @@ public class GameManager : MonoBehaviour {
     public List<AIController> iControllers = new List<AIController>();
     public List<Vector3> wanderPoints = new List<Vector3>();
 
-    public void QuitGame()
-    {
-        Application.Quit();
-    }
-
     private void Start()
     {
         BuildWanderPoints(wanderPointsLimit);
