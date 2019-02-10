@@ -164,13 +164,19 @@ public class AIController : MonoBehaviour {
 
     public void TakeDamage(float damage, AIController controller)
     {
+        if (controller.enemyStats.teamID == enemyStats.teamID && !gameManager.allowFriendlyFire)
+            return;
+
         if (currentTarget == null)
         {
             currentTarget = controller;
         }
         currentHealth -= damage;
-        agent.destination = currentTarget.transform.position;
-        CheckAlive();        
+        CheckAlive();
+        if (alive)
+        {
+            agent.destination = currentTarget.transform.position;
+        }
     }
 
     void CheckAlive()

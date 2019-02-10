@@ -57,9 +57,15 @@ public class AISpawner : MonoBehaviour {
     Vector3 FindSpawnPoint()
     {
         Vector3 randomPoint = (Random.insideUnitSphere * spawnRadius) + transform.position;
-        NavMeshHit navHit;
-        NavMesh.SamplePosition(randomPoint, out navHit, spawnRadius, -1);
-        return new Vector3(navHit.position.x, transform.position.y, navHit.position.z);
+
+        NavMeshHit navHit; 
+        if (NavMesh.SamplePosition(randomPoint, out navHit, spawnRadius, -1))
+        {
+            return new Vector3(navHit.position.x, navHit.position.y, navHit.position.z);
+        } else
+        {
+            return FindSpawnPoint();
+        }
     }
 
     GameObject PickRandomObject()

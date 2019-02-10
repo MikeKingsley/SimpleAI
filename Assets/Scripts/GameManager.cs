@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour {
     public float wanderRadius = 40f;
     [Range(0,1000)]
     public int wanderPointsLimit = 1000;
+    public bool allowFriendlyFire = false;
 
     [Header("Stats")]
     public float teamCountBlue = 0;
